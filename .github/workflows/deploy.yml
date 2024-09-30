@@ -1,3 +1,4 @@
+
 name: Deploy Discord Bot
 
 on:
@@ -16,7 +17,15 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.23.1'
-        
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Build
         run: |
           go build -o bot main.go
@@ -29,7 +38,7 @@ jobs:
       - name: Install rsync
         run: |
           sudo apt-get update
-          sudo apt-get install -y rsync
+          sudo apt-get install -y --no-install-recommends rsync
       
       - name: Create .env file
         run: |
@@ -42,6 +51,7 @@ jobs:
       - name: Deploy on Server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            set -e
             cd ~/discord-bot
             docker compose down
             docker compose up -d
