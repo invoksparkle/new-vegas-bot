@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 
@@ -27,6 +28,10 @@ var (
 					Required:    true,
 				},
 			},
+		},
+		{
+			Name:        "radio",
+			Description: "Проигрывает радио из Fallout New Vegas",
 		},
 	}
 )
@@ -119,6 +124,45 @@ func interactionHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					Content: content,
 				},
 			})
+		case "radio":
+			voiceChannelID := "834079206186024981"
+			err := playRadio(s, i.GuildID, voiceChannelID)
+			if err != nil {
+				fmt.Println("Ошибка при проигрывании радио:", err)
+			}
 		}
 	}
+}
+
+func playRadio(s *discordgo.Session, guildID, voiceChannelID string) error {
+	vc, err := s.ChannelVoiceJoin(guildID, voiceChannelID, false, true)
+	if err != nil {
+		return fmt.Errorf("не удалось присоединиться к голосовому каналу: %v", err)
+	}
+
+	cmd := exec.Command("ffmpeg", "-i", "https://fallout.fm:8444/falloutfm3.ogg", "-f", "s16le", "-ar", "48000", "-ac", "pipe:1")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("error retrieving audio stream: %v", err)
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("error starting ffmpeg: %v", err)
+	}
+
+	vc.Speaking(true)
+	defer vc.Speaking(false)
+
+	buff := make([]byte, 960*2)
+
+	for {
+		_, err := stdout.Read(buff)
+		if err != nil {
+			break
+		}
+		vc.OpusSend <- buff
+	}
+
+	return nil
 }
