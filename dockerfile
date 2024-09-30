@@ -1,5 +1,5 @@
 FROM golang:alpine AS builder
-
+RUN apk add ffmpeg
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
