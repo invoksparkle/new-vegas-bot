@@ -63,7 +63,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd ~/discord-bot
             docker-compose down
-            docker-compose up -d
+            docker-compose up -d --build
             exit
           EOF
 

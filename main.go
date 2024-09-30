@@ -36,18 +36,10 @@ var (
 	}
 )
 
-// main - Точка входа в программу.
-//
-// main - главная функция программы, которая:
-//
-// 1. Читает токен бота из переменной окружения BOT_TOKEN.
-// 2. Создает сессию бота.
-// 3. Добавляет обработчик событий interactionHandler.
-// 4. Открывает соединение с сервером Discord.
-// 5. Создает все команды, описанные в переменной commands.
-// 6. Ждет, пока не будет нажата клавиша CTRL+C.
-// 7. Удаляет все созданные команды.
-// 8. Закрывает соединение с сервером Discord.
+// main - функция, которая является точкой входа программы.
+// Она инициализирует бота, регистрирует команды, запускает
+// обработчик событий и останавливает бота при SIGINT, SIGTERM
+// или CTRL+C.
 func main() {
 	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
@@ -134,6 +126,14 @@ func interactionHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
+// playRadio - проигрывает радио из Fallout New Vegas в указанный голосовой
+// канал.
+//
+// s - сессия бота.
+// guildID - ID сервера.
+// voiceChannelID - ID голосового канала, в котором будет проигрываться радио.
+//
+// Возвращает ошибку, если возникла проблема при проигрывании радио.
 func playRadio(s *discordgo.Session, guildID, voiceChannelID string) error {
 	vc, err := s.ChannelVoiceJoin(guildID, voiceChannelID, false, true)
 	if err != nil {
