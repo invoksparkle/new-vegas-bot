@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  discord-bot:
+    build: .
+    container_name: discord-bot
+    restart: unless-stopped
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      GUILD_ID: ${GUILD_ID}
