@@ -1,0 +1,49 @@
+name: Deploy Discord Bot
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23.1'
+        
+      - name: Build
+        run: |
+          go build -o bot main.go
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      
+      - name: Install rsync
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync
+      
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_VARS }}" > .env
+      
+      - name: Sync Project Files to Server
+        run: |
+          rsync -avz --delete ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/discord-bot/
+
+      - name: Deploy on Server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd ~/discord-bot
+            docker compose down
+            docker compose up -d
+            exit
+          EOF
